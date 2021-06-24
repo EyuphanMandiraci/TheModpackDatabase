@@ -1,7 +1,15 @@
 from PyQt5.QtWidgets import QPushButton, QLabel, QDesktopWidget
 from PyQt5.QtCore import Qt
+import web_request
 from ui import link
-from json import dump
+from json import dump, loads
+from wget import download
+from zipfile import ZipFile
+from os import listdir, remove
+from shutil import move, rmtree
+from pathlib import Path
+from random import choice
+from threads import download_thread
 
 
 def none_test():
@@ -32,7 +40,7 @@ def mp_names_loop(cls, mp_names, clicked_connect=none_test):
         cls.mp_button.clicked.connect(clicked_connect)
         cls.mp_button.setObjectName(i)
         pos += 30
-    link.init(cls, "https://mpdb.xyz", pos+30)
+    link.init(cls, "https://mpdb.xyz", pos + 30)
 
 
 def hide_download(cls, downloaded):
@@ -48,5 +56,81 @@ def hide_download(cls, downloaded):
 def change_button_text(cls, value):
     cls.run_button.setText(f"Run {value}")
     cls.selected_mp = value
+
+
+def download_modpack(name, author, data):
+    global display_name, download_url
+    print(f"Downloading {name} by {author}!")
+    download(f"https://mpdb.xyz/modpacks/{author}_{name}.zip")
+    zip_path = f"{author}_{name}.zip"
+    if name not in data["downloaded"]:
+        data["downloaded"].append(name)
+        dosya = open("data.txt", "w")
+        dump(data, dosya, ensure_ascii=False, indent=4, sort_keys=True)
+        dosya.close()
+    zip = ZipFile(zip_path, "r")
+    all_files = zip.namelist()
+    if "modlist.html" in all_files:
+        for i in all_files:
+            if "overrides" in i:
+                zip.extract(i, name)
+        for i in listdir(f"{name}/overrides"):
+            move(f"{name}/overrides/{i}", f"{name}")
+        manifest = loads(zip.read("manifest.json"))
+        Path(f"{name}/mods").mkdir(parents=True, exist_ok=True)
+
+        for id in manifest["files"]:
+            pid = id["projectID"]
+            fid = id["fileID"]
+            l = ["cursemeta", "curse_nicky"]
+            choosed = choice(l)
+            if choosed == "cursemeta":
+                r = web_request.get_data(f"https://cursemeta.dries007.net/{pid}/{fid}.json")
+                display_name = r["DisplayName"]
+                download_url = r["DownloadURL"]
+            elif choosed == "curse_nicky":
+                r = web_request.get_data(f"https://curse.nikky.moe/api/addon/{pid}/file/{fid}")
+                display_name = r["displayName"]
+                download_url = r["downloadUrl"]
+            print(f"Downloading {display_name}")
+            download(download_url, f"{name}/mods")
+        rmtree(f"{name}/overrides")
+        zip.close()
+        remove(f"{author}_{name}.zip")
+
+    else:
+        zip.extractall(name)
+        zip.close()
+        remove(f"{name}/{name}_{author}.zip")
+
+
+# Thread Runners and Stoppers
+
+def start_download_worker(cls, mp_name, data):
+    global thread
+    global cl
+    cl = cls
+    thread = download_thread.DownloadThread(parent=None, mp_name=mp_name, data=data)
+    thread.start()
+    for i in cls.mp_names:
+        b = cls.findChild(QPushButton, i)
+        b.setEnabled(False)
+    cls.run_button.setEnabled(False)
+    cls.modpack_selector.setEnabled(False)
+    cls.ram_selector.setEnabled(False)
+    cls.username_selector.setEnabled(False)
+    thread.any_signal.connect(stop_download_worker)
+
+
+def stop_download_worker():
+    thread.stop()
+    for i in cl.mp_names:
+        b = cl.findChild(QPushButton, i)
+        b.setEnabled(True)
+    cl.run_button.setEnabled(True)
+    cl.modpack_selector.setEnabled(True)
+    cl.ram_selector.setEnabled(True)
+    cl.username_selector.setEnabled(True)
+
 
 

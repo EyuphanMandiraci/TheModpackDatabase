@@ -60,8 +60,12 @@ class MPDB(QMainWindow):
             run_minecraft_info.init(self)
             self.selected_mp = modpack_selector.currentText(self)
 
-            funcs.mp_names_loop(self, self.mp_names)
+            funcs.mp_names_loop(self, self.mp_names, self.start_downloader)
             funcs.hide_download(self, self.data)
+
+
+        def start_downloader(self):
+            funcs.start_download_worker(self, self.sender().objectName(), self.data)
 
         def change_button_text(self, value):
             funcs.change_button_text(self, value)
