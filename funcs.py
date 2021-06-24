@@ -101,7 +101,7 @@ def download_modpack(name, author, data):
     else:
         zip.extractall(name)
         zip.close()
-        remove(f"{name}/{name}_{author}.zip")
+        remove(f"{author}_{name}.zip")
 
 
 # Thread Runners and Stoppers
@@ -109,9 +109,13 @@ def download_modpack(name, author, data):
 def start_download_worker(cls, mp_name, data):
     global thread
     global cl
+    global modpack_name
+    modpack_name = mp_name
     cl = cls
     thread = download_thread.DownloadThread(parent=None, mp_name=mp_name, data=data)
     thread.start()
+    cls.run_minecraft_info.setText(f"Downloading {mp_name}")
+    cls.run_minecraft_info.resize(len(f"Downloading {mp_name}") * 8, cls.run_minecraft_info.height())
     for i in cls.mp_names:
         b = cls.findChild(QPushButton, i)
         b.setEnabled(False)
@@ -124,13 +128,20 @@ def start_download_worker(cls, mp_name, data):
 
 def stop_download_worker():
     thread.stop()
+    cl.run_minecraft_info.setText("")
     for i in cl.mp_names:
         b = cl.findChild(QPushButton, i)
         b.setEnabled(True)
+    b = cl.findChild(QPushButton, modpack_name)
+    b.hide()
     cl.run_button.setEnabled(True)
     cl.modpack_selector.setEnabled(True)
     cl.ram_selector.setEnabled(True)
     cl.username_selector.setEnabled(True)
+    cl.modpack_selector.addItem(modpack_name)
+    cl.modpack_selector.adjustSize()
+
+
 
 
 
