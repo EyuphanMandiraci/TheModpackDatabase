@@ -1,7 +1,9 @@
 from sys import exit as sys_exit
 from sys import argv
+from typing import List
+
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtGui import QMouseEvent, QCursor
+from PyQt5.QtGui import QCursor
 from PyQt5.QtCore import Qt
 from time import perf_counter
 import data
@@ -11,19 +13,27 @@ import funcs
 from ui import modpack_selector, ram_selector, username_selector, discord_image, run_button, run_minecraft_info
 from webbrowser import open as wb_open
 
+run_timer = perf_counter()
 
 
 class MPDB(QMainWindow):
+
+    rams: List[str]
+    mp_names: List[str]
+    data: dict
+    selected_mp: str
     try:
         def __init__(self):
             super().__init__()
+
+
+        def initUI(self):
+
             self.mp_names = web_request.get_data("https://mpdb.xyz/get_data.php")
             self.rams = []
             self.data = {}
             self.selected_mp = ""
 
-        def initUI(self):
-            run_timer = perf_counter()
             self.data = {"downloaded": []}
             if not data.check_path("data.txt"):
                 data.set_data("data.txt", self.data)
@@ -33,7 +43,7 @@ class MPDB(QMainWindow):
                     # TODO: Buraya run butonunu disable etmeyi ekle
                     pass
 
-            for ram in range(get_ram()-1, 0, -1):
+            for ram in range(get_ram() - 1, 0, -1):
                 self.rams.append(str(ram) + " GB")
 
             self.resize(1000, 600)
@@ -53,13 +63,8 @@ class MPDB(QMainWindow):
             funcs.mp_names_loop(self, self.mp_names)
             funcs.hide_download(self, self.data)
 
-            run_timer = perf_counter() - run_timer
-            print(run_timer)
-
-
         def change_button_text(self, value):
             funcs.change_button_text(self, value)
-
 
         def mouseMoveEvent(self, event):
             if event.x() <= 64 and event.y() <= 64:
@@ -87,6 +92,7 @@ if __name__ == "__main__":
     app = QApplication(argv)
     mpdb = MPDB()
     mpdb.initUI()
+    run_timer = perf_counter() - run_timer
+    print(run_timer)
     mpdb.show()
     sys_exit(app.exec_())
-
