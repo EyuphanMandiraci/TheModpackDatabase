@@ -10,7 +10,8 @@ import data
 import web_request
 from get_ram import get_ram
 import funcs
-from ui import modpack_selector, ram_selector, username_selector, discord_image, run_button, run_minecraft_info
+from ui import modpack_selector, ram_selector, username_selector, discord_image, run_button, run_minecraft_info, \
+    forge_selector
 from webbrowser import open as wb_open
 
 run_timer = perf_counter()
@@ -58,6 +59,8 @@ class MPDB(QMainWindow):
             discord_image.init(self, "https://mpdb.xyz/discord.png")
             run_button.init(self, f"RUN {modpack_selector.currentText(self)}")
             run_minecraft_info.init(self)
+            forge_selector.init(self, 0)
+
             self.selected_mp = modpack_selector.currentText(self)
 
             funcs.mp_names_loop(self, self.mp_names, self.start_downloader)

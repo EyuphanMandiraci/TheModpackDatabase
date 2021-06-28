@@ -10,6 +10,7 @@ from shutil import move, rmtree
 from pathlib import Path
 from random import choice
 from threads import download_thread
+from requests import get
 
 
 def none_test():
@@ -56,6 +57,9 @@ def hide_download(cls, downloaded):
 def change_button_text(cls, value):
     cls.run_button.setText(f"Run {value}")
     cls.selected_mp = value
+    cls.forge_selector.clear()
+    info = loads(get("https://mpdb.xyz/get_data.php?data=true&from=name&name=" + value).text)
+    cls.forge_selector.addItems(get_forges(info["version"]))
 
 
 def download_modpack(name, author, data):
@@ -142,6 +146,9 @@ def stop_download_worker():
     cl.modpack_selector.adjustSize()
 
 
+forges = loads(get("https://raw.githubusercontent.com/MultiMC/meta-upstream/master/forge/maven-metadata.json").text)
 
 
-
+def get_forges(version=None):
+    if version is not None:
+        return forges[version]
