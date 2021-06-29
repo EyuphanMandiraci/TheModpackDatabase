@@ -34,7 +34,6 @@ class MPDB(QMainWindow):
             self.rams = []
             self.data = {}
             self.selected_mp = ""
-
             self.data = {"downloaded": []}
             if not data.check_path("data.txt"):
                 data.set_data("data.txt", self.data)
@@ -58,13 +57,17 @@ class MPDB(QMainWindow):
             username_selector.init(self)
             discord_image.init(self, "https://mpdb.xyz/discord.png")
             run_button.init(self, f"RUN {modpack_selector.currentText(self)}")
+            self.run_button.resize(len(self.run_button.text()) * 8, self.run_button.height())
             run_minecraft_info.init(self)
             forge_selector.init(self, 0)
+            if len(self.data["downloaded"]) != 0:
+                self.run_button.setEnabled(True)
 
             self.selected_mp = modpack_selector.currentText(self)
 
             funcs.mp_names_loop(self, self.mp_names, self.start_downloader)
             funcs.hide_download(self, self.data)
+
 
 
         def start_downloader(self):
@@ -88,6 +91,8 @@ class MPDB(QMainWindow):
             self.run_button.move(self.width() - self.run_button.width(), 0)
             self.run_minecraft_info.move(self.width() - self.run_minecraft_info.width(), 30)
             self.username_selector.move(self.width() - self.run_button.width() - self.username_selector.width(), 0)
+
+
 
 
 

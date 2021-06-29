@@ -60,6 +60,10 @@ def change_button_text(cls, value):
     cls.forge_selector.clear()
     info = loads(get("https://mpdb.xyz/get_data.php?data=true&from=name&name=" + value).text)
     cls.forge_selector.addItems(get_forges(info["version"]))
+    cls.run_button.resize(len("Run " + value) * 8, cls.run_button.height())
+    cls.username_selector.move(cls.width() - cls.run_button.width() - cls.username_selector.width(), 0)
+    cls.run_button.move(cls.width() - cls.run_button.width(), 0)
+
 
 
 def download_modpack(name, author, data):
