@@ -1,3 +1,5 @@
+import os
+
 from PyQt5.QtWidgets import QPushButton, QLabel, QDesktopWidget
 from PyQt5.QtCore import Qt
 import web_request
@@ -9,7 +11,7 @@ from os import listdir, remove
 from shutil import move, rmtree
 from pathlib import Path
 from random import choice
-from threads import download_thread
+from threads import download_thread, run_thread
 from requests import get
 
 
@@ -26,9 +28,12 @@ def center(cls):
 
 def mp_names_loop(cls, mp_names, clicked_connect=none_test):
     pos = 130
-    width = len(max(mp_names, key=len)) * 8
+    names = []
     for i in mp_names:
-        cls.mp_label = QLabel(i, cls)
+        names.append(i["mp_name"])
+    width = len(max(names, key=len)) * 8
+    for i in mp_names:
+        cls.mp_label = QLabel(i["mp_name"], cls)
         cls.mp_label.move(0, pos)
         cls.mp_label.resize(width, cls.mp_label.height())
         cls.mp_label.setAlignment(Qt.AlignLeft)
@@ -39,7 +44,7 @@ def mp_names_loop(cls, mp_names, clicked_connect=none_test):
         cls.mp_button.move(width, pos)
         cls.mp_button.setStyleSheet("background:rgba(185,187,190,255)")
         cls.mp_button.clicked.connect(clicked_connect)
-        cls.mp_button.setObjectName(i)
+        cls.mp_button.setObjectName(i["mp_name"])
         pos += 30
     link.init(cls, "https://mpdb.xyz", pos + 30)
 
@@ -58,8 +63,8 @@ def change_button_text(cls, value):
     cls.run_button.setText(f"Run {value}")
     cls.selected_mp = value
     cls.forge_selector.clear()
-    info = loads(get("https://mpdb.xyz/get_data.php?data=true&from=name&name=" + value).text)
-    cls.forge_selector.addItems(get_forges(info["version"]))
+    info = loads(get(f"https://mpdb.xyz/api/modpack.php?name={value}").text)
+    cls.forge_selector.addItems(get_forges(info["mp_version"]))
     cls.run_button.resize(len("Run " + value) * 8, cls.run_button.height())
     cls.username_selector.move(cls.width() - cls.run_button.width() - cls.username_selector.width(), 0)
     cls.run_button.move(cls.width() - cls.run_button.width(), 0)
@@ -69,7 +74,8 @@ def change_button_text(cls, value):
 def download_modpack(name, author, data):
     global display_name, download_url
     print(f"Downloading {name} by {author}!")
-    download(f"https://mpdb.xyz/modpacks/{author}_{name}.zip")
+    download(f"http://185.255.94.159/modpacks/{author}/{name}.zip")
+    os.rename(f"{name}.zip", f"{author}_{name}.zip")
     zip_path = f"{author}_{name}.zip"
     if name not in data["downloaded"]:
         data["downloaded"].append(name)
@@ -125,7 +131,7 @@ def start_download_worker(cls, mp_name, data):
     cls.run_minecraft_info.setText(f"Downloading {mp_name}")
     cls.run_minecraft_info.resize(len(f"Downloading {mp_name}") * 8, cls.run_minecraft_info.height())
     for i in cls.mp_names:
-        b = cls.findChild(QPushButton, i)
+        b = cls.findChild(QPushButton, i["mp_name"])
         b.setEnabled(False)
     cls.run_button.setEnabled(False)
     cls.modpack_selector.setEnabled(False)
@@ -137,8 +143,9 @@ def start_download_worker(cls, mp_name, data):
 def stop_download_worker():
     thread.stop()
     cl.run_minecraft_info.setText("")
+    print(cl.mp_names)
     for i in cl.mp_names:
-        b = cl.findChild(QPushButton, i)
+        b = cl.findChild(QPushButton, i["mp_name"])
         b.setEnabled(True)
     b = cl.findChild(QPushButton, modpack_name)
     b.hide()
@@ -156,3 +163,34 @@ forges = loads(get("https://raw.githubusercontent.com/MultiMC/meta-upstream/mast
 def get_forges(version=None):
     if version is not None:
         return forges[version]
+
+
+def start_run_worker(mc_version, forge_version, mp_name, username, ram, cls):
+    global run
+    if username == "":
+        run = run_thread.RunThread(mc_version=mc_version, forge_version=forge_version, mp_name=mp_name, ram=ram)
+    else:
+        run = run_thread.RunThread(mc_version=mc_version, forge_version=forge_version, mp_name=mp_name,
+                                   username=username, ram=ram)
+    run.start()
+    run.any_signal.connect(lambda cls=cls: stop_run_worker(cls))
+
+def stop_run_worker(cls):
+    cls.run_button.setEnabled(True)
+    run.stop()
+
+
+def download_file(url, path=""):
+    with open(path, "wb") as f:
+        r = get(url, stream=True)
+        total_length = r.headers.get("content-length")
+        if total_length is None:
+            print(r.content)
+        else:
+            total_length = int(total_length)
+            for data in r.iter_content(chunk_size=4096):
+                f.write(data)
+
+
+
+

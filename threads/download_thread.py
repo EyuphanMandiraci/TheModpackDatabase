@@ -19,10 +19,10 @@ class DownloadThread(QtCore.QThread):
 
         def run(self):
             print("Downloading ModPack")
-            r = web_request.get_data(f"https://mpdb.xyz/get_data.php?data=true&from=name&name={self.mp_name}")
-            self.name = r["name"]
-            self.author = r["author"]
-            self.version = r["version"]
+            r = web_request.get_data(f"https://mpdb.xyz/api/modpack.php?name={self.mp_name}")
+            self.name = r["mp_name"]
+            self.author = r["mp_author"]
+            self.version = r["mp_version"]
             Path(self.name).mkdir(parents=True, exist_ok=True)
             funcs.download_modpack(self.name, self.author, self.data)
             self.any_signal.emit()
