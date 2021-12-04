@@ -19,6 +19,7 @@ class MPDB(QMainWindow):
 
 
 
+
 app = QApplication(sys.argv)
 window = MPDB()
 window.initUI()
