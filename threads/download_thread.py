@@ -10,9 +10,11 @@ class DownloadThread(QtCore.QThread):
         self.url = url
 
     def run(self) -> None:
+        print("Download Started")
         download(self.url)
         self.any_signal.emit()
 
     def stop(self):
-        print("Download Complete!")
+        print(f"Download Completed! URL: {self.url}")
         self.wait()
+

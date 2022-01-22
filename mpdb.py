@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication
 import sys
 from ui import modpack_selector, modpack_text, modpack_download_button
 from requests import get, HTTPError, ConnectionError
-from wget import download
+import wget
 
 # UI Components
 from ui.modpack_download_button import ModpackDlButton
@@ -44,29 +44,18 @@ class MPDB(QMainWindow):
             self.mp_text.move(0, count)
             self.mp_text.setToolTip(i["mp_author"])
             self.mp_dl_button = modpack_download_button.ModpackDlButton("Download", self.mp_text.text(), self)
-            self.mp_dl_button.click_connect(self.download_modpack)
             self.mp_dl_button.move(100, count)
+            self.mp_dl_button.clicked.connect(self.downloadModpack)
             count += self.mp_text.height()
 
-    def download_modpack(self):
+    def downloadModpack(self):
         mp_name = self.sender().objectName()
-        try:
-            mp_info = get(f"https://mpdb.xyz/api/modpack.php?name={mp_name}").json()
-        except HTTPError:
-            mp_info = get(f"https://mpdb.xyz/api/modpack.php?name={mp_name}", verify=False).json()
-        except ConnectionError:
-            mp_info = get(f"https://mpdb.xyz/api/modpack.php?name={mp_name}", verify=False).json()
-        dl_th = download_thread.DownloadThread(f"http://185.255.94.159/modpacks/{mp_info['mp_author']}/{mp_name}.zip",
-                                               parent=self)
-        dl_th.any_signal.connect(dl_th.stop)
-        dl_th.start()
-
-
-
-
-
-
-
+        mp_info = get(f"https://mpdb.xyz/api/modpack?name={mp_name}").json()[0]
+        file_name = mp_info["mp_file"]
+        server_info = get(f"https://mpdb.xyz/api/server?server={mp_info['server']}").json()[0]
+        dlth = download_thread.DownloadThread(server_info["url"] + file_name, parent=self)
+        dlth.any_signal.connect(dlth.stop)
+        dlth.start()
 
 
 app = QApplication(sys.argv)
