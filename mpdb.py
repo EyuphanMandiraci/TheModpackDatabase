@@ -5,7 +5,7 @@ from typing import Union
 import requests
 from PyQt5.QtCore import QSize, QPoint
 from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent
-from PyQt5.QtWidgets import QMainWindow, QApplication, QDialog, QPushButton, QPlainTextEdit
+from PyQt5.QtWidgets import QMainWindow, QApplication, QDialog, QPlainTextEdit
 from PyQt5 import QtCore
 import sys
 from pathlib import Path
@@ -72,7 +72,6 @@ class MPDB(QMainWindow):
             for btn in self.mp_buttons:
                 if btn.objectName() == mp:
                     btn.setEnabled(False)
-        self.mp_selector.addItem("Test")
         self.status = StatusText("", self)
         self.status.move(QPoint(0, 500))
         self.progress_bar = ProgressBar(self)
@@ -104,7 +103,7 @@ class MPDB(QMainWindow):
             modpacks = get("https://mpdb.xyz/api/modpack").json()
         except Exception as e:
             modpacks = []
-            log.error(traceback.format_tb(e.__traceback__))
+            log.error(str(traceback.format_tb(e.__traceback__)) + f" \nError: {e}")
         count = 50
         for i in modpacks:
             self.mp_text = ModpackText(i["mp_name"], self)
@@ -137,7 +136,7 @@ class MPDB(QMainWindow):
             dlth.download_completed.connect(downloadCompleted)
             dlth.start()
         except Exception as e:
-            log.error(traceback.format_tb(e.__traceback__))
+            log.error(str(traceback.format_tb(e.__traceback__)) + f" \nError: {e}")
 
     def changeValue(self, percent, downloaded, total):
         self.progress_bar.setValue(percent)
@@ -167,7 +166,7 @@ class MPDB(QMainWindow):
             self.run_thread.run_started.connect(self.openLogDialog)
             self.run_thread.start()
         except Exception as e:
-            log.error(traceback.format_tb(e.__traceback__))
+            log.error(str(traceback.format_tb(e.__traceback__)) + f" \nError: {e}")
 
     def closeEvent(self, a0: QCloseEvent) -> None:
         if self.run_thread is not None:
@@ -188,7 +187,7 @@ class MPDB(QMainWindow):
             self.dialog.setWindowTitle("Minecraft Log")
             self.dialog.show()
         except Exception as e:
-            log.error(traceback.format_tb(e.__traceback__))
+            log.error(str(traceback.format_tb(e.__traceback__)) + f" \nError: {e}")
 
 
 app = QApplication(sys.argv)

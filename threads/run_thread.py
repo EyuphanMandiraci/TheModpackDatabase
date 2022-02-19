@@ -6,7 +6,8 @@ from subprocess import Popen, PIPE
 import minecraft_launcher_lib as mll
 from pathlib import Path
 from shutil import copyfile
-from os import remove
+from os import remove, system, path
+import platform
 
 from utils import log
 
@@ -33,8 +34,8 @@ class RunThread(QtCore.QThread):
                 username += "___"
 
             if self.window.skinpath is not None:
-                skin_mod_url = "https://media.forgecdn.net/files/3621/647/CustomSkinLoader_ForgeLegacy-14.13-SNAPSHOT-313" \
-                               ".jar"
+                skin_mod_url = "https://media.forgecdn.net/files/3621/647/CustomSkinLoader_ForgeLegacy-14.13-SNAPSHOT" \
+                               "-313.jar "
                 wget.download(skin_mod_url, out=f"{self.mp_info['mp_name']}/mods")
                 Path(f"{self.mp_info['mp_name']}/CustomSkinLoader/LocalSkin/skins").mkdir(exist_ok=True, parents=True)
                 try:
@@ -44,22 +45,26 @@ class RunThread(QtCore.QThread):
                 wget.download("https://mpdb.xyz/static/CustomSkinLoader.json", out=f"{self.mp_info['mp_name']}"
                                                                                    f"/CustomSkinLoader")
                 try:
-                    remove(f"{self.mp_info['mp_name']}/CustomSkinLoader/LocalSkin/skins/{username}.png")
+                    remove(path.join(f"{self.mp_info['mp_name']}", "CustomSkinLoader", "LocalSkin", "skins",
+                                     f"{username}.png"))
                 except Exception as e:
                     print(e)
                 copyfile(self.window.skinpath, f"{self.mp_info['mp_name']}/CustomSkinLoader/LocalSkin/skins/{username}.png")
             else:
                 try:
-                    remove(f"{self.mp_info['mp_name']}/CustomSkinLoader/LocalSkin/skins/{username}.png")
+                    remove(path.join(f"{self.mp_info['mp_name']}", "CustomSkinLoader", "LocalSkin", "skins",
+                                     f"{username}.png"))
                 except Exception as e:
                     print(e)
-            ram = int(self.window.ram_selector.currentText()[0]) * 1024
+            ram = int(self.window.ram_selector.currentText().replace(" GB", "")) * 1024
             options = {
                 "username": username,
                 "jvmArguments": ["-Xms512M", f"-Xmx{ram}M"]
             }
             command = mll.command.get_minecraft_command(self.mp_forge, self.mp_info["mp_name"],
                                                         options)
+            if platform.system() == "Linux":
+                system(f"chmod +x {self.mp_info['mp_name']}/runtime/jre-legacy/linux/jre-legacy/bin/java")
             self.c = Popen(command, stdout=PIPE)
             self.run_started.emit()
             while True:
@@ -70,7 +75,7 @@ class RunThread(QtCore.QThread):
                 self.running.emit()
             self.stopped.emit()
         except Exception as e:
-            log.error(traceback.format_tb(e.__traceback__))
+            log.error(str(traceback.format_tb(e.__traceback__)) + f" \nError: {e}")
 
     def killMinecraft(self):
         try:

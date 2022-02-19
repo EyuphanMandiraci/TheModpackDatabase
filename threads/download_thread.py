@@ -112,11 +112,6 @@ class DownloadThread(QtCore.QThread):
             if f"{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}.zip" in os.listdir(f"{str(Path().home())}/.mpdbtemp"):
                 zf = zipfile.ZipFile(f"{str(Path().home())}/.mpdbtemp/{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}.zip", "r")
                 zf.extractall(self.mp_info['mp_name'])
-                command = mll.command.get_minecraft_command(
-                    f"{self.mp_info['mp_version']}-forge-{self.mp_info['mp_forge']}", self.mp_info['mp_name'],
-                    mll.utils.generate_test_options())
-                os.system(f"chmod +x {self.mp_info['mp_name']}/runtime/jre-legacy/linux/jre-legacy/bin/java")
-                call(command)
             else:
                 Path("temp").mkdir(exist_ok=True)
                 mll.forge.install_forge_version(f"{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}", "temp")

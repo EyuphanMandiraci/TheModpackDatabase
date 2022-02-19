@@ -36,7 +36,6 @@ def _install_libraries(data, datai, path: str, callback: Dict[str, Callable], in
     callback.get("setStatus", empty)("Download Libraries")
     callback.get("setMax", empty)(len(data))
     for count, i in enumerate(data):
-        print(index)
         # Check, if the rules allow this lib for the current system
         if not parse_rule_list(i, "rules", {}):
             continue
@@ -122,7 +121,6 @@ def _install_assets(data, path, callback, index, parse_count):
                       os.path.join(path, "assets", "objects", value["hash"][:2], value["hash"]), callback,
                       sha1=value["hash"])
         count += 1
-        print(index)
         callback.get("setProgress", empty)(count)
 
 

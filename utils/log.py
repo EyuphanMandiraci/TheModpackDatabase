@@ -1,6 +1,10 @@
 import logging
 import os.path
 from datetime import datetime
+from pathlib import Path
+
+
+Path("mpdblogs").mkdir(exist_ok=True)
 
 logger = logging.Logger("mpdb", "DEBUG")
 logger.setLevel(logging.DEBUG)
