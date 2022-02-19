@@ -23,6 +23,7 @@ from ui.username_selector import UsernameSelector
 from ui.ram_selector import RamSelector
 from ui.skin_selector import SkinSelector
 
+
 # Utils
 from utils import data
 from utils import log
