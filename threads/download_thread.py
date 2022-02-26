@@ -31,15 +31,15 @@ class DownloadThread(QtCore.QThread):
         try:
             for i in self.window.mp_buttons:
                 i.setEnabled(False)
-            if self.mp_info['mp_name'] in listdir(getcwd()):
-                rmtree(self.mp_info['mp_name'])
+            if self.window.instancepath + self.mp_info['mp_name'] in listdir(getcwd()):
+                rmtree(self.window.instancepath + self.mp_info['mp_name'])
             print("Download Started")
             self.window.status.setText(f"Downloading {self.mp_info['mp_name']}")
             self.download_file(self.url)
             print(f"Download Completed! URL: {self.url}")
             print("Installing Modpack")
             mp_zip = zipfile.ZipFile(self.mp_info["mp_file"], "r")
-            Path(self.mp_info["mp_name"] + "/mods").mkdir(parents=True, exist_ok=True)
+            Path(self.window.instancepath + "/" + self.mp_info["mp_name"] + "/mods").mkdir(parents=True, exist_ok=True)
             files = mp_zip.namelist()
             isCurseforge = False
             if "manifest.json" in files:
@@ -51,11 +51,11 @@ class DownloadThread(QtCore.QThread):
                 for file in files:
                     if "overrides" in file:
                         mp_zip.extract(file, self.mp_info["mp_name"])
-                for file in listdir(f"{self.mp_info['mp_name']}/overrides"):
-                    move(f"{self.mp_info['mp_name']}/overrides/{file}", f"{self.mp_info['mp_name']}/{file}")
-                rmtree(f"{self.mp_info['mp_name']}/overrides")
+                for file in listdir(self.window.instancepath + f"{self.mp_info['mp_name']}/overrides"):
+                    move(f"{self.window.instancepath + '/' + self.mp_info['mp_name']}/overrides/{file}", f"{self.mp_info['mp_name']}/{file}")
+                rmtree(self.window.instancepath + f"{self.mp_info['mp_name']}/overrides")
             else:
-                mp_zip.extractall(self.mp_info["mp_name"])
+                mp_zip.extractall(self.window.instancepath + "/" + self.mp_info["mp_name"])
             mp_zip.close()
             remove(self.mp_info["mp_file"])
             print("Modpack Installed")
@@ -99,7 +99,7 @@ class DownloadThread(QtCore.QThread):
                     all_info = {'name': mod_info["DisplayName"]}
                 self.window.status.setText(f"Downloading {all_info['name']}")
                 print(f"Downloading {all_info['name']} {downloaded * 100 / len(mods)}")
-                download(mod_info["DownloadURL"], out=f"{self.mp_info['mp_name']}/mods")
+                download(mod_info["DownloadURL"], out=self.window.instancepath + f"{self.mp_info['mp_name']}/mods")
                 downloaded += 1
                 self.download_signal.emit(downloaded * 100 / len(mods), downloaded, len(mods))
         except Exception as e:
@@ -109,15 +109,20 @@ class DownloadThread(QtCore.QThread):
         try:
             Path(f"{str(Path().home())}/.mpdbtemp").mkdir(exist_ok=True, parents=False)
             self.window.status.setText("Downloading Minecraft and Forge! (Progress Bar Not Working In This Part)")
-            if f"{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}.zip" in os.listdir(f"{str(Path().home())}/.mpdbtemp"):
-                zf = zipfile.ZipFile(f"{str(Path().home())}/.mpdbtemp/{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}.zip", "r")
-                zf.extractall(self.mp_info['mp_name'])
+            if f"{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}.zip" in os.listdir(
+                    f"{str(Path().home())}/.mpdbtemp"):
+                zf = zipfile.ZipFile(
+                    f"{str(Path().home())}/.mpdbtemp/{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}.zip", "r")
+                zf.extractall(self.window.instancepath + self.mp_info['mp_name'])
             else:
                 Path("temp").mkdir(exist_ok=True)
-                mll.forge.install_forge_version(f"{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}", "temp")
-                make_archive(f"{str(Path().home())}/.mpdbtemp/{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}", "zip", "temp")
-                zf = zipfile.ZipFile(f"{str(Path().home())}/.mpdbtemp/{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}.zip", "r")
-                zf.extractall(self.mp_info['mp_name'])
+                mll.forge.install_forge_version(f"{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}", "temp",
+                                                parent=self)
+                make_archive(f"{str(Path().home())}/.mpdbtemp/{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}",
+                             "zip", "temp")
+                zf = zipfile.ZipFile(
+                    f"{str(Path().home())}/.mpdbtemp/{self.mp_info['mp_version']}-{self.mp_info['mp_forge']}.zip", "r")
+                zf.extractall(self.window.instancepath + "/" + self.mp_info['mp_name'])
                 rmtree("temp")
         except Exception as e:
             log.error(traceback.format_tb(e.__traceback__))

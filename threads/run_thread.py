@@ -35,24 +35,28 @@ class RunThread(QtCore.QThread):
 
             if self.window.skinpath is not None:
                 skin_mod_url = "https://media.forgecdn.net/files/3621/647/CustomSkinLoader_ForgeLegacy-14.13-SNAPSHOT" \
-                               "-313.jar "
+                               "-313.jar"
                 wget.download(skin_mod_url, out=f"{self.mp_info['mp_name']}/mods")
-                Path(f"{self.mp_info['mp_name']}/CustomSkinLoader/LocalSkin/skins").mkdir(exist_ok=True, parents=True)
+                Path(f"{self.window.instancepath}/{self.mp_info['mp_name']}/CustomSkinLoader/LocalSkin/skins").mkdir(exist_ok=True, parents=True)
                 try:
-                    remove(f"{self.mp_info['mp_name']}/CustomSkinLoader/CustomSkinLoader.json")
+                    remove(f"{self.window.instancepath}/{self.mp_info['mp_name']}/CustomSkinLoader/CustomSkinLoader.json")
                 except Exception as e:
                     print(e)
-                wget.download("https://mpdb.xyz/static/CustomSkinLoader.json", out=f"{self.mp_info['mp_name']}"
+                wget.download("https://mpdb.xyz/static/CustomSkinLoader.json", out=f"{self.window.instancepath}/"
+                                                                                   f"{self.mp_info['mp_name']}"
                                                                                    f"/CustomSkinLoader")
                 try:
-                    remove(path.join(f"{self.mp_info['mp_name']}", "CustomSkinLoader", "LocalSkin", "skins",
+                    remove(path.join(f"{self.window.instancepath}/{self.mp_info['mp_name']}", "CustomSkinLoader",
+                                     "LocalSkin", "skins",
                                      f"{username}.png"))
                 except Exception as e:
                     print(e)
-                copyfile(self.window.skinpath, f"{self.mp_info['mp_name']}/CustomSkinLoader/LocalSkin/skins/{username}.png")
+                copyfile(self.window.skinpath, f"{self.window.instancepath}/{self.mp_info['mp_name']}"
+                                               f"/CustomSkinLoader/LocalSkin/skins/{username}.png")
             else:
                 try:
-                    remove(path.join(f"{self.mp_info['mp_name']}", "CustomSkinLoader", "LocalSkin", "skins",
+                    remove(path.join(f"{self.window.instancepath}/{self.mp_info['mp_name']}", "CustomSkinLoader",
+                                     "LocalSkin", "skins",
                                      f"{username}.png"))
                 except Exception as e:
                     print(e)
@@ -61,10 +65,12 @@ class RunThread(QtCore.QThread):
                 "username": username,
                 "jvmArguments": ["-Xms512M", f"-Xmx{ram}M"]
             }
-            command = mll.command.get_minecraft_command(self.mp_forge, self.mp_info["mp_name"],
+            print("İnen Sürümler:", mll.utils.get_installed_versions(self.window.instancepath + "/" + self.mp_info["mp_name"]))
+            command = mll.command.get_minecraft_command(self.mp_forge,
+                                                        self.window.instancepath + "/" + self.mp_info["mp_name"],
                                                         options)
             if platform.system() == "Linux":
-                system(f"chmod +x {self.mp_info['mp_name']}/runtime/jre-legacy/linux/jre-legacy/bin/java")
+                system(f'chmod +x \"{self.window.instancepath + "/" + self.mp_info["mp_name"]}/runtime/jre-legacy/linux/jre-legacy/bin/java\"')
             self.c = Popen(command, stdout=PIPE)
             self.run_started.emit()
             while True:

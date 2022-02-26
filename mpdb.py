@@ -5,7 +5,7 @@ from typing import Union
 import requests
 from PyQt5.QtCore import QSize, QPoint
 from PyQt5.QtGui import QPixmap, QIcon, QCloseEvent
-from PyQt5.QtWidgets import QMainWindow, QApplication, QDialog, QPlainTextEdit
+from PyQt5.QtWidgets import QMainWindow, QApplication, QDialog, QPlainTextEdit, QPushButton
 from PyQt5 import QtCore
 import sys
 from pathlib import Path
@@ -22,6 +22,7 @@ from ui.log_text_edit import LogTextEdit
 from ui.username_selector import UsernameSelector
 from ui.ram_selector import RamSelector
 from ui.skin_selector import SkinSelector
+from ui.screenshots_button import ScreenshotsButton
 
 # Utils
 from utils import data
@@ -31,8 +32,16 @@ from utils import log
 from threads import download_thread
 from threads import run_thread
 
+# Windows
+from windows.screenshots_window import ScreenshotsWindow
+from windows.credits_window import CreditsWindow
+
 
 class MPDB(QMainWindow):
+    creditswindow: CreditsWindow
+    opencredits: Union[QPushButton, QPushButton]
+    screenshotswindow: ScreenshotsWindow
+    screenshotselector: ScreenshotsButton
     skin_selector: SkinSelector
     ram_selector: RamSelector
     user_selector: UsernameSelector
@@ -55,6 +64,8 @@ class MPDB(QMainWindow):
         self.run_thread = None
         self.skinpath = None
         Path("mpdblogs").mkdir(exist_ok=True)
+        Path(f"{str(Path().home())}/.mpdbinstances").mkdir(exist_ok=True)
+        self.instancepath = str(Path().home()) + "/.mpdbinstances"
 
     def initUI(self):
         try:
@@ -72,6 +83,7 @@ class MPDB(QMainWindow):
             for btn in self.mp_buttons:
                 if btn.objectName() == mp:
                     btn.setEnabled(False)
+                    self.createScreenshotButton(btn)
         self.status = StatusText("", self)
         self.status.move(QPoint(0, 500))
         self.progress_bar = ProgressBar(self)
@@ -91,6 +103,11 @@ class MPDB(QMainWindow):
         self.ram_selector.resize(QSize(200, 50))
         self.ram_selector.move(QPoint(200, 0))
         self.skin_selector = SkinSelector(self)
+        self.opencredits = QPushButton("Credits", self)
+        self.opencredits.move(0, 540)
+        self.opencredits.clicked.connect(self.openCredits)
+        if not self.data["downloaded"]:
+            self.run_button.setEnabled(False)
 
     def mpselectorChanged(self, mp_name):
         self.run_button.setObjectName(mp_name)
@@ -108,12 +125,21 @@ class MPDB(QMainWindow):
         for i in modpacks:
             self.mp_text = ModpackText(i["mp_name"], self)
             self.mp_text.move(0, count)
+            self.mp_text.resize(200, 30)
             self.mp_text.setToolTip(i["mp_author"])
             self.mp_dl_button = ModpackDlButton("Download", self.mp_text.text(), self)
-            self.mp_dl_button.move(100, count)
+            self.mp_dl_button.move(200, count)
             self.mp_dl_button.clicked.connect(self.downloadModpack)
             self.mp_buttons.append(self.mp_dl_button)
             count += self.mp_text.height()
+
+    def createScreenshotButton(self, btn):
+        self.screenshotselector = ScreenshotsButton(self)
+        self.screenshotselector.move(btn.x() + btn.width(), btn.y())
+        self.screenshotselector.resize(self.screenshotselector.height(),
+                                       self.screenshotselector.height())
+        self.screenshotselector.clicked.connect(self.openScreenshotsWindow)
+        self.screenshotselector.setObjectName(btn.objectName())
 
     def downloadModpack(self, mp_name):
         def downloadCompleted(thread):
@@ -125,6 +151,8 @@ class MPDB(QMainWindow):
                 for btn in self.mp_buttons:
                     if btn.objectName() == mp:
                         btn.setEnabled(False)
+                        self.createScreenshotButton(btn)
+            self.run_button.setEnabled(True)
             self.mp_selector.addItem(mp_name)
 
         try:
@@ -188,6 +216,17 @@ class MPDB(QMainWindow):
             self.dialog.show()
         except Exception as e:
             log.error(str(traceback.format_tb(e.__traceback__)) + f" \nError: {e}")
+
+    def openScreenshotsWindow(self, sender):
+        image_path = self.instancepath + "/" + str(Path(sender.objectName() + "/screenshots"))
+        if not Path(self.instancepath + "/" + sender.objectName() + "/screenshots").exists():
+            Path(self.instancepath + "/" + sender.objectName() + "/screenshots").mkdir(exist_ok=True)
+        self.screenshotswindow = ScreenshotsWindow(image_path)
+        self.screenshotswindow.show()
+    
+    def openCredits(self):
+        self.creditswindow = CreditsWindow()
+        self.creditswindow.show()
 
 
 app = QApplication(sys.argv)

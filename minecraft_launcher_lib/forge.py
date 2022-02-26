@@ -90,7 +90,7 @@ def forge_processors(data: Dict[str, Any], minecraft_directory: Union[str, os.Pa
         shutil.rmtree(root_path)
 
 
-def install_forge_version(versionid: str, path: str, callback: Dict[str, Callable] = None, java: str = None) -> NoReturn:
+def install_forge_version(versionid: str, path: str, callback: Dict[str, Callable] = None, java: str = None, parent=None) -> NoReturn:
     """
     Installs a forge version. Fore more information look at the documentation.
     """
@@ -107,7 +107,7 @@ def install_forge_version(versionid: str, path: str, callback: Dict[str, Callabl
     version_data = json.loads(version_content)
     forge_version_id = version_data["version"]
     # Make sure, the base version is installed
-    install_minecraft_version(version_data["minecraft"], path, callback=callback)
+    install_minecraft_version(version_data["minecraft"], path, callback=callback, parent=parent)
     # Install all needed libs from install_profile.json
     install_libraries(version_data, path, callback)
     # Extract the version.json

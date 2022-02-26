@@ -136,7 +136,7 @@ def install_assets(data, path, callback, thread_count=15):
         thread.join()
 
 
-def do_version_install(versionid: str, path: str, callback: Dict[str, Callable], url: str = None) -> NoReturn:
+def do_version_install(versionid: str, path: str, callback: Dict[str, Callable], url: str = None, parent=None) -> NoReturn:
     """
     Install the given version
     """
@@ -175,7 +175,7 @@ def do_version_install(versionid: str, path: str, callback: Dict[str, Callable],
 
 
 def install_minecraft_version(versionid: str, minecraft_directory: Union[str, os.PathLike],
-                              callback: Dict[str, Callable] = None) -> NoReturn:
+                              callback: Dict[str, Callable] = None, parent=None) -> NoReturn:
     """
     Install a Minecraft Version. Fore more Information take a look at the documentation"
     """
@@ -184,7 +184,7 @@ def install_minecraft_version(versionid: str, minecraft_directory: Union[str, os
     if callback is None:
         callback = {}
     if os.path.isfile(os.path.join(minecraft_directory, "versions", versionid, f"{versionid}.json")):
-        do_version_install(versionid, minecraft_directory, callback)
+        do_version_install(versionid, minecraft_directory, callback, parent=parent)
         return
     version_list = requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json",
                                 headers={"user-agent": get_user_agent()}).json()
